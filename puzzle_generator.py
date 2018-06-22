@@ -7,7 +7,7 @@
 # Description: Generates a 2D array of bits and 2 1D arrays of counts of those bits for each
 #  column/row. Outputs that data to an indicated JSON file.
 
-import sys, argparse, random
+import sys, argparse, random, json
 
 class PuzzleGenerator:
 
@@ -18,9 +18,40 @@ class PuzzleGenerator:
     'base': 2,
     'filename': 'puzzle.json',
     'countsonly': False,
+    'print': False,
   }
 
   def __init__ (self, argv):
+    parser = self.build_parser()
+    args = parser.parse_args(argv[1:])
+    if args.size != self.DEFAULT_PARAMS['size']:
+      args.width = args.height = args.size
+
+    self.width = args.width
+    self.height = args.height
+    self.base = args.base
+    self.filename = args.filename
+    self.countsonly = args.countsonly
+    self.printsolved = args.printsolved
+
+  def run (self):
+    grid = [[self.rand_value() for i in range(self.width)] for j in range(self.height)]
+    rows = [self.count_blocks(grid[j]) for j in range(self.height)]
+    cols = [self.count_blocks([row[i] for row in grid]) for i in range(self.width)]
+
+    if self.printsolved:
+      self.print_puzzle(grid,rows,cols,solved=True)
+
+    jsondata = {
+      'grid': grid if self.countsonly else [],
+      'rows': rows,
+      'cols': cols,
+      'base': self.base,
+    }
+    with open(self.filename,'w') as f:
+      json.dump(jsondata,f,indent=2)
+
+  def build_parser (self):
     parser = argparse.ArgumentParser(description='Generates a 2D array of bits and 2 1D arrays'+ \
       ' of counts of those bits for each column/row. Outputs that data to an indicated JSON file.')
     parser.add_argument('-x','--width',default=self.DEFAULT_PARAMS['width'],type=int,
@@ -36,16 +67,9 @@ class PuzzleGenerator:
       help="Sets output filename (default: {})".format(self.DEFAULT_PARAMS['filename']))
     parser.add_argument('-co','--countsonly',action='store_true',
       help="Do not write the full grid to the file (default: write full grid)")
-    args = parser.parse_args(argv[1:])
-
-    if args.size != self.DEFAULT_PARAMS['size']:
-      args.width = args.height = args.size
-
-    self.width = args.width
-    self.height = args.height
-    self.base = args.base
-    self.filename = args.filename
-    self.countsonly = args.countsonly
+    parser.add_argument('-p','--printsolved',action='store_true',
+      help="Print the solved puzzle after generation (default: do not print)")
+    return parser
 
   def rand_value (self):
     return random.randrange(self.base)
@@ -72,28 +96,21 @@ class PuzzleGenerator:
   def max_num_blocks (self, blockslist):
     return max([len(blocks) for blocks in blockslist])
 
-  def run (self):
-    self.grid = [[self.rand_value() for i in range(self.width)] for j in range(self.height)]
-    self.rows = [self.count_blocks(self.grid[j]) for j in range(self.height)]
-    self.cols = [self.count_blocks([row[i] for row in self.grid]) for i in range(self.width)]
-
-    self.print_puzzle()
-
-  def print_puzzle (self, solved=True):
-    maxrowblockslen = self.max_blocks_len(self.rows)
-    maxcolnumblocks = self.max_num_blocks(self.cols)
+  def print_puzzle (self, grid, rows, cols, solved=True):
+    maxrowblockslen = self.max_blocks_len(rows)
+    maxcolnumblocks = self.max_num_blocks(cols)
 
     for i in range(maxcolnumblocks):
       print(' '*(maxrowblockslen+2),end='')
       print(' '.join([
         str(col[i+len(col)-maxcolnumblocks]) if (i+len(col)-maxcolnumblocks >= 0) else ' '
-        for col in self.cols
+        for col in cols
       ]))
-    print(' '*maxrowblockslen+' +'+'-'*(2*len(self.cols)-1))
+    print(' '*maxrowblockslen+' +'+'-'*(2*len(cols)-1))
 
-    for i in range(len(self.rows)):
-      row = self.rows[i]
-      cellrow = self.grid[i]
+    for i in range(len(rows)):
+      row = rows[i]
+      cellrow = grid[i]
       print(' '*(maxrowblockslen-self.blocks_len(row)),end='')
       print(' '.join([str(block) for block in row]),end='')
       print(' |',end='')
