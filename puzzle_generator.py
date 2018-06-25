@@ -4,7 +4,7 @@
 # Author: Ibb Marsh
 # Created: 2018-06-20
 #
-# Description: Generates a 2D array of bits and 2 1D arrays of counts of those bits for each
+# Description: Generates a 2D array of bits and 2 2D arrays of counts of those bits for each
 #  column/row. Outputs that data to an indicated JSON file.
 
 import sys, argparse, random, json
