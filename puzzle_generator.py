@@ -43,7 +43,7 @@ class PuzzleGenerator:
       self.print_puzzle(grid,rows,cols,solved=True)
 
     jsondata = {
-      'grid': grid if self.countsonly else [],
+      'grid': grid if not self.countsonly else [],
       'rows': rows,
       'cols': cols,
       'base': self.base,
