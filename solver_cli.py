@@ -8,6 +8,7 @@
 # Solves for, and then outputs, all grids which fit those constraints.
 
 import sys, argparse, json
+from solver_logic import Cell, Block, Line
 
 class PuzzleSolver:
 	DEFAULT_PARAMS = {
@@ -32,9 +33,14 @@ class PuzzleSolver:
 		data = {}
 		with open(self.filename,'r') as f:
 			data = json.load(f)
-		self.row_blocks = data['rows']
-		self.col_blocks = data['cols']
+
 		self.base = data['base']
+		self.width = len(data['cols'])
+		self.height = len(data['rows'])
+		self.cells = [[Cell(0,(i,j)) for j in range(self.width)] for i in range(self.height)]
+		self.cellsT = [[self.cells[i][j] for i in range(self.height)] for j in range(self.width)]
+		self.rows = [Line(self.cells[k],data['rows'][k]) for k in range(self.height)]
+		self.cols = [Line(self.cellsT[k],data['cols'][k]) for k in range(self.width)]
 
 
 if __name__ == '__main__':

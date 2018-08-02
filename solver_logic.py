@@ -7,7 +7,7 @@
 
 class Cell:
 	"""Helper class to allow multiple arrays to modify the same value."""
-	def __init__ (self, val):
+	def __init__ (self, val, pos):
 		self.value = val
 		self.parent_lines = []
 		self.parent_blocks = []
@@ -27,6 +27,39 @@ class Block:
 		block_len = block_nums[block_index]
 		for i in range(cells_start_index,cells_end_index-block_len+1):
 			self.possibles.append(self.parent_line.cells[i:i+block_len])
+		self._solved = False
+
+	def set_sibling_blocks (self, prev_block, next_block):
+		self.prev_block = prev_block
+		self.next_block = next_block
+
+	def solved (self):
+		if self._solved:
+			return self._solved
+		if len(self.possibles) in (0,1):
+			self._solved = True
+		return self._solved
+
+class Line:
+	"""A line contains cells and blocks. It provides helper methods for interacting with the
+	blocks as a whole, as well as reporting on whether it is solved."""
+	def __init__ (self, cells, block_nums):
+		self.cells = cells
+		self.blocks = [Block(self,block_nums,i) for i in range(len(block_nums))]
+		for i in range(len(block_nums)):
+			prev_block = self.blocks[i-1] if i > 0 else None
+			next_block = self.blocks[i+1] if i < len(block_nums)-1 else None
+			self.blocks[i].set_sibling_blocks(prev_block,next_block)
+		self._solved = False
+
+	def solved (self):
+		if self._solved:
+			return self._solved
+		for block in self.blocks:
+			if not block.solved():
+				return False
+		self._solved = True
+		return self._solved
 
 class SolverLogic:
 	pass
